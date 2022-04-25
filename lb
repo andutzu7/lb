@@ -1,19 +1,26 @@
 #!/bin/bash
-name="Luke Smith"
+## Vanilla chocolad
+name="pseudot"
+protocol="https"
 webdir="$PWD"
-website="https://lukesmith.xyz/" # Keep a trailing slash.
-css="../style.css"
-blogfile="$(date +%Y).html"
-indexfile="blogindex.html"
-rssfile="rss.xml"
-archivefile="$webdir/blog/.htaccess"
+webroot="pseudot.xyz/" # Keep a trailing slash.
+www_var_folder_root="pseudot.xyz"
+blogfile="$webdir/$www_var_folder_root/$(date +%Y).html"
+indexfile="$webdir/$www_var_folder_root/blogindex.html"
+archivefile="$webdir/.htaccess"
+gittoken=""
+gitrepo=""
+remotehost=""
+
+
+
 [ -z "$EDITOR" ] && EDITOR="vim"
 
-[ ! -d "$webdir/blog/.drafts" ] &&
+[ ! -d "$webdir/.drafts" ] &&
 read -erp "Initialize blog in $webdir?" ask &&
 	if [ "$ask" = "y" ]; then
 	printf "Initializing blog system...\\n"
-	mkdir -pv "$webdir/blog/.drafts" || printf "Error. Do you have write permissions in this directory?\\n"
+	mkdir -pv "$webdir/.drafts" || printf "Error. Do you have write permissions in this directory?\\n"
 	echo "Options +Indexes" > "$archivefile"
 else
 	exit
@@ -23,9 +30,10 @@ newpost() { read -erp "Give a title for your post:
 	" title
 	echo "$title" | grep -q "\"" && printf "Double quotation marks (\") are not allowed in entry titles.\\n" && exit
 	url="$(echo "$title" | iconv -cf UTF-8 -t ASCII//TRANSLIT | tr -d '[:punct:]' | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | sed "s/-\+/-/g;s/\(^-\|-\$\)//g")"
-	echo "AddDescription \"$title\" \"$url.html\"" >>  "$archivefile"|| { echo "Error: Is $archivefile writeable?"; exit; }
-	( [ -f "$webdir/blog/.drafts/$url.html" ] || [ -f "$webdir/blog/$url.html" ] ) && echo "There is already an existing draft or post of that same name/URL." && exit
-	$EDITOR "$webdir/blog/.drafts/$url.html" ;}
+	echo "AddDescription \"$title\" \"$url.md\"" >>  "$archivefile"|| { echo "Error: Is $archivefile writeable?"; exit; }
+	( [ -f "$webdir/.drafts/$url/$url.md" ] || [ -f "$webdir/$url/$url.md" ] ) && echo "There is already an existing draft or post of that same name/URL." && exit
+	mkdir -p "$webdir/.drafts/$url";
+	$EDITOR "$webdir/.drafts/$url/$url.md" ;}
 
 listandReturn() {
 	printf "Listing contents of %s\\n" "$1"
@@ -43,40 +51,78 @@ publish() { \
 	delete draft
 	htaccessentry=$(grep "$basefile" "$archivefile")
 	realname="$(echo "$htaccessentry" | cut -d'"' -f2)"
-	rssdate="$(grep "$basefile" blog/.htaccess | sed "s/.*\.html\"* *#*//g" | tr -d '\n')"
-	[ -z "$rssdate" ] && rssdate="$(LC_TIME=en_US date '+%a, %d %b %Y %H:%M:%S %z')" # RSS date formats must comply with standards to validate.
 	webdate="$(date '+%a, %d %b %Y %H:%M:%S %z')" # But this visible date you can set to any format.
 	tmpdir=$(mktemp -d)
-	printf "<!DOCTYPE html>\\n<html lang=\"en\">\\n<head>\\n<title>%s</title>\\n<link rel='stylesheet' type='text/css' href='%s'>\\n<meta charset='utf-8'/>\\n</head>\\n<body>\\n<h1>%s</h1>\\n<small>[<a href='%s#%s'>link</a>&mdash;<a href='%s'>standalone</a>]</small>\\n%s\\n<footer>by <strong><a href='%s'>%s</a></strong></footer>\\n</body>\\n\\n</html>" "$realname" "$css" "$realname" "../$blogfile" "$base" "$basefile" "$(cat "$webdir/blog/.drafts/$basefile")" "$website" "$name" > "$webdir/blog/$basefile"
-	printf "\\n<item>\\n<title>%s</title>\\n<guid>%s%s#%s</guid>\\n<pubDate>%s</pubDate>\\n<description><![CDATA[\\n%s\\n]]></description>\\n</item>\\n\\n" "$realname" "$website" "$blogfile" "$base" "$rssdate" "$(cat "$webdir/blog/.drafts/$basefile")" >  "$tmpdir/rss"
-	printf "<div class='entry'>\\n<h2 id='%s'>%s</h2>\\n<small>[<a href='#%s'>link</a>&mdash;<a href='%s'>standalone</a>]</small>\\n%s\\n<small>%s</small>\\n</div>\\n" "$base" "$realname" "$base" "blog/$basefile" "$(cat "$webdir/blog/.drafts/$basefile")" "$webdate" > "$tmpdir/html"
-	printf "<li>%s &ndash; <a href=\"blog/%s\">%s</a></li>\\n" "$(date '+%Y %b %d')" "$basefile" "$realname" > "$tmpdir/index"
-	sed -i "/<!-- LB -->/r $tmpdir/html" "$blogfile"
-	sed -i "/<!-- LB -->/r $tmpdir/rss" "$rssfile"
+	$(cp -r "$webdir/.drafts/$basefile" "$webdir/$webtarget/posts/")
+	$(markdown-to-standalone-html -t "$webdir/$webtarget/template.html" "$webdir/$webtarget/posts/$basefile/$basefile.md" > "$webdir/$webtarget/posts/$basefile/$basefile.html");
+	printf "<div class='entry'>\\n<h2 id='%s'>%s</h2>\\n<small>[<a href='%s'>standalone</a>]</small>\\n%s...\\n<small>%s</small>\\n</div>\\n" "$base" "$realname" "$website/posts/$basefile/$basefile.html" "$(head -n 5 "$webdir/.drafts/$basefile/$basefile.md" | sed -e 's/#/ /g')" "$webdate" > "$tmpdir/html"
+	printf "<div class='article'>\\n<h3 class='subtitle' id='%s'>%s</h3>\\n<p>%s... <small><a href='%s'>Read more &#187;</a></small> </p> \\n</div>\\n" "$base" "$realname" "$(head -n 5 "$webdir/.drafts/$basefile/$basefile.md" | sed -e 's/#/ /g')" "$website/posts/$basefile/$basefile.html"  > "$tmpdir/html2"
+	printf "<li>%s &ndash; <a href=\"%s\">%s</a></li>\\n" "$(date '+%Y %b %d')" "$website/posts/$basefile/$basefile.html" "$realname" > "$tmpdir/index"
+	cat $tmpdir/html > "$blogfile"
+	cat $tmpdir/html2 > "$webtarget_blog_file"
 	sed -i "/<!-- LB -->/r $tmpdir/index" "$indexfile"
 	sed -i "/ \"$base.html\"/d" "$archivefile"
-	echo "AddDescription \"$realname\" \"$basefile\" #$rssdate" >> "$archivefile"
-	rm -f "$webdir/blog/.drafts/$chosen"
+	echo "AddDescription \"$realname\" \"$basefile\" "  r>> "$archivefile"
+	article_path=$webdir/$webtarget_blog_file;
+	sed -i "/<div class='articles'>/r $article_path" $webdir/$webtarget/index.html
+	sed -i "/<p>Cele mai recente postari:<\/p>/r $blogfile" $webdir/$www_var_folder_root/index.html
+	rm $article_path;
+	rm "$webdir/$webtarget/posts/$basefile/$basefile.md"
+	rm -rf "$webdir/.drafts/$chosen"
+	push
+	impose_changes
 }
 
 confirm() { read -erp "Really $1 \"$base\"? (y/N) " choice && echo "$choice" | grep -qi "^y$" || exit 1 ;}
 
-delete() { \
-	sed -i "/<item/{:a;N;/<\\/item>/!ba};/#$base<\\/guid/d" "$rssfile"
-	sed -i "/<div class='entry'>/{:a;N;/<\\/div>/!ba};/id='$base'/d" "$blogfile"
-	sed -i "/<li>.*<a href=\"blog\\/$base.html\">/d" "$indexfile"
-	rm -f "$webdir/blog/$basefile" && [[ "$1" != "draft" ]] && printf "Old blog entry removed.\\n";}
+push() { git add . ; git commit -m "new post" ; git push "https://$gittoken/$gitrepo";}
 
-revise() { awk '/^<small>\[/{flag=1;next}/<footer>/{flag=0}flag' "$webdir/blog/$chosen" > "$webdir/blog/.drafts/$basefile"
-	"$EDITOR" "$webdir/blog/.drafts/$basefile"
-	printf "Revision stored in blog/.drafts. Publish as normal entry when desired.\\n" ;}
+
+impose_changes() { ssh -i #ssh_key_path  $remotehost -t "cd /var/www;/bin/git pull;/bin/systemctl restart nginx" ;}
+
+delete() { \
+	indexpath=$webdir/$webtarget/posts/$base.html
+	sed -i "/<div class='entry'>/{:a;N;/<\\/div>/!ba};/id='$base'/d" "$webdir/$www_var_folder_root/index.html"
+	sed -i "/<div class='article'>/{:a;N;/<\\/div>/!ba};/id='$base'/d" "$webdir/$webtarget/index.html"
+	# Maybe someday
+	sed -i "\@<li>.*<a href=\"$indexpath\">@d" "$indexfile"
+	rm -rf "$webdir/$webtarget/posts/$basefile" && [[ "$1" != "draft" ]] && printf "Old blog entry removed.\\n";
+	push
+	impose_changes
+}
+
+revise() {
+	if [ ! -d "$webdir/.drafts/$chosen" ];then
+	mkdir -p "$webdir/.drafts/${chosen%%.*}/";
+	fi
+	awk '/^<small>\[/{flag=1;next}/<footer>/{flag=0}flag' "$webdir/$webtarget/posts/$chosen/$chosen.html" > "$webdir/.drafts/$chosen/$chosen.html"
+	"$EDITOR" "$webdir/.drafts/${chosen%%.*}/$chosen.html"
+	push
+	impose_changes
+
+	printf "Revision stored in .drafts. Publish as normal entry when desired.\\n" ;}
+
+if [ -z $2 ]
+then
+
+echo "You must specify the site's prefix.";
+printf "Available options: \\n\\t1)blog\\n\\t2)programming\\n\\t3)books\\n\\t4)draw\\n\\t5)uc\\n";
+exit
+else
+website="$protocol://$2.$www_var_folder_root";
+
+webtarget="$2.$www_var_folder_root"
+webtarget_blog_file="$2.$www_var_folder_root/$(date +%Y).html"
+touch $webtarget_blog_file;
+
+fi
 
 case "$1" in
-	n*) newpost ;;
-	e*) listandReturn "$webdir"/blog/.drafts/ edit && "$EDITOR" "$webdir/blog/.drafts/$chosen" ;;
-	p*) listandReturn "$webdir"/blog/.drafts/ publish && publish ;;
-	t*) listandReturn "$webdir"/blog/.drafts/ trash && confirm trash && rm -f "$webdir/blog/.drafts/$chosen" && sed -i "/ \"$base.html\"/d" "$archivefile" ; printf "Draft deleted.\\n" ;;
-	d*) listandReturn "$webdir"/blog/ delete && confirm delete && delete && sed -i "/ \"$base.html\"/d" "$archivefile" ;;
-	r*) listandReturn "$webdir"/blog/ revise && revise ;;
-	*) printf "lb blog system by Luke Smith <luke@lukesmith.xyz>\\nUsage:\\n  lb n:\\tnew draft\\n  lb e:\\tedit draft\\n  lb p:\\tpublish/finalize draft\\n  lb r:\\trevise published entry\\n  lb t:\\tdiscard draft\\n  lb d:\\tdelete published entry\\n\\nBe sure to have the following pattern added to your RSS feed, blog file and blog index:\\n\\n<!-- LB -->\\n\\nNew content will be added directly below that sequence. This is required.\\nSee https://github.com/LukeSmithxyz/lb for more.\\n" ;;
+	a*) newpost ;;
+	e*) listandReturn "$webdir"/.drafts/ edit && "$EDITOR" "$webdir/.drafts/$chosen/$chosen.md" ;;
+	p*) listandReturn "$webdir"/.drafts/ publish && publish ;;
+	t*) listandReturn "$webdir"/.drafts/ trash && confirm trash && rm -rf "$webdir/.drafts/$chosen" && sed -i "/ \"$base.html\"/d" "$archivefile" ; printf "Draft deleted.\\n" ;;
+	d*) listandReturn "$webdir"/"$webtarget/posts" delete && confirm delete && delete && sed -i "/ \"$base.html\"/d" "$archivefile" ;;
+	r*) listandReturn "$webdir"/"$webtarget/posts" revise && revise ;;
+	*) printf "Usage:\\n  lb a:\\tnew draft\\n  lb e:\\tedit draft\\n  lb p:\\tpublish/finalize draft\\n  lb r:\\trevise published entry\\n  lb t:\\tdiscard draft\\n  lb d:\\tdelete published entry\\n\\nBe sure to have the following pattern added to your RSS feed, blog file and blog index:\\n\\n<!-- LB -->\\n\\nNew content will be added directly below that sequence. This is required.\\n" ;;
 esac
