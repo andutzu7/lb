@@ -98,7 +98,6 @@ revise() {
 	awk '/^<small>\[/{flag=1;next}/<footer>/{flag=0}flag' "$webdir/$webtarget/posts/$chosen/$chosen.html" > "$webdir/.drafts/$chosen/$chosen.html"
 	"$EDITOR" "$webdir/.drafts/${chosen%%.*}/$chosen.html"
 	push
-	impose_changes
 
 	printf "Revision stored in .drafts. Publish as normal entry when desired.\\n" ;}
 
