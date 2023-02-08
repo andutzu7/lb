@@ -68,9 +68,7 @@ publish() { \
 	cat $tmpdir/html2 > "$webtarget_archive_file"
 	sed -i "/<!-- LB -->/r $tmpdir/index" "$indexfile"
 	sed -i "/ \"$base.html\"/d" "$archivefile"
-	article_path=$webdir/$webtarget_archive_file;
-	echo $article_path;
-	echo "##########ASDFASDF"
+	article_path=$webdir/$webtarget/$webtarget_archive_file;
 	sed -i "/<div class='articles'>/r $article_path" "$webdir/$webtarget/index.html"
 	sed -i "/<p>Cele mai recente postari:<\/p>/r $blogfile" "$webdir/$domain_name/index.html"
 	rm "$webdir/$webtarget/posts/$basefile/$basefile.md"
