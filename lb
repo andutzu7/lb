@@ -88,9 +88,7 @@ delete() { \
 	indexpath=$webdir/$webtarget/posts/$base.html
 	sed -i "/<div class='entry'>/{:a;N;/<\\/div>/!ba};/id='$base'/d" "$webdir/$domain_name/index.html"
 	sed -i "/<div class='article'>/{:a;N;/<\\/div>/!ba};/id='$base'/d" "$webdir/$webtarget/index.html"
-	# Maybe someday
-	sed -i "\@<li>.*<a href=\"$indexpath\">@d" "$indexfile"
-	rm -rf "$webdir/$webtarget/posts/$basefile" && [[ "$1" != "draft" ]] && printf "Old blog entry removed.\\n";
+	rm -rf "$webdir/$webtarget/posts/$basefile" && printf "Old blog entry removed.\\n";
 	push
 	impose_changes
 }
