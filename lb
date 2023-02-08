@@ -55,7 +55,7 @@ listandReturn() {
 
 publish() { \
 	delete draft
-	touch "$webtarget_archive_file";
+	touch "$article_ref";
 	htaccessentry=$(grep "$basefile" "$archivefile")
 	post_title="$(echo "$htaccessentry" | cut -d'"' -f2)"
 	webdate="$(date '+%a, %d %b %Y %H:%M:%S %z')" # But this visible date you can set to any format.
@@ -66,10 +66,9 @@ publish() { \
 	printf "<div class='article'>\\n<h3 class='subtitle' id='%s'>%s</h3>\\n<p>%s... <small><a href='%s'>Read more &#187;</a></small> </p> \\n</div>\\n" "$basefile" "$post_title" "$(head -n 2 "$webdir/.drafts/$basefile/$basefile.md" | sed -e 's/#/ /g')" "$website/posts/$basefile/$basefile.html"  > "$tmpdir/html2"
 	printf "<li>%s &ndash; <a href=\"%s\">%s</a></li>\\n" "$(date '+%Y %b %d')" "$website/posts/$basefile/$basefile.html" "$post_title" > "$tmpdir/index"
 	cat $tmpdir/html > "$blogfile"
-	cat $tmpdir/html2 > "$webtarget_archive_file"
+	cat $tmpdir/html2 > "$article_ref"
 	sed -i "/<!-- LB -->/r $tmpdir/index" "$indexfile"
 	sed -i "/ \"$base.html\"/d" "$archivefile"
-	article_ref="$webdir/$webtarget_archive_file";
 	echo "###########aici"
 	echo $article_ref
 	echo "$webdir/$webtarget/index.html"
@@ -137,7 +136,7 @@ else
 website="$protocol://$2.$domain_name";
 
 webtarget="$2.$domain_name"
-webtarget_archive_file="$webdir/$webtarget/$(date +%Y).html"
+article_ref="$webdir/$webtarget/$(date +%Y).html"
 
 # multiple parameter actions
 case "$1" in
