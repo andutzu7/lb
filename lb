@@ -64,7 +64,7 @@ publish() { \
 	$(markdown-to-standalone-html -t "$webdir/$webtarget/template.html" "$webdir/$webtarget/posts/$basefile/$basefile.md" > "$webdir/$webtarget/posts/$basefile/$basefile.html");
 	printf "<div class='entry'>\\n<h2 id='%s'>%s</h2>\\n<small>[<a href='%s'>standalone</a>]</small>\\n%s...\\n<small>%s</small>\\n</div>\\n" "$base" "$title" "$website/posts/$basefile/$basefile.html" "$(head -n 2 "$webdir/.drafts/$basefile/$basefile.md" | sed -e 's/#/ /g')" "$webdate" > "$tmpdir/html"
 	printf "<div class='article'>\\n<h3 class='subtitle' id='%s'>%s</h3>\\n<p>%s... <small><a href='%s'>Read more &#187;</a></small> </p> \\n</div>\\n" "$basefile" "$title" "$(head -n 2 "$webdir/.drafts/$basefile/$basefile.md" | sed -e 's/#/ /g')" "$website/posts/$basefile/$basefile.html"  > "$tmpdir/html2"
-	printf "<li>%s &ndash; <a href=\"%s\">%s</a></li>\\n" "$(date '+%Y %b %d')" "$website/posts/$basefile/$basefile.html" "$realname" > "$tmpdir/index"
+	printf "<li>%s &ndash; <a href=\"%s\">%s</a></li>\\n" "$(date '+%Y %b %d')" "$website/posts/$basefile/$basefile.html" "$title" > "$tmpdir/index"
 	cat $tmpdir/html >> "$blogfile"
 	cat $tmpdir/html2 >> "$webtarget_archive_file"
 	sed -i "/<!-- LB -->/r $tmpdir/index" "$indexfile"
