@@ -126,6 +126,7 @@ then
 # one parameter actions
 case "$1" in
 	h*) display_help;;
+	t*) listandReturn "$webdir"/.drafts/ trash && confirm trash && rm -rf "$webdir/.drafts/$chosen" ; printf "Draft deleted.\\n" ;;
 	*) printf "Usage:\\n  lb a:\\tnew draft\\n  lb e:\\tedit draft\\n  lb p:\\tpublish/finalize draft\\n  lb r:\\trevise published entry\\n  lb t:\\tdiscard draft\\n  lb d:\\tdelete published entry\\n\\nBe sure to have the following pattern added to your RSS feed, blog file and blog index:\\n\\n<!-- LB -->\\n\\nNew content will be added directly below that sequence. This is required.\\n" ;;
 esac
 else
@@ -141,7 +142,6 @@ case "$1" in
 	d*) listandReturn "$webdir"/"$webtarget/posts" delete && confirm delete && delete && sed -i "/ \"$base.html\"/d" ;;
 	r*) listandReturn "$webdir"/"$webtarget/posts" revise && revise ;;
 	e*) listandReturn "$webdir"/.drafts/ edit && "$EDITOR" "$webdir/.drafts/$chosen/$chosen.md" ;;
-	t*) listandReturn "$webdir"/.drafts/ trash && confirm trash && rm -rf "$webdir/.drafts/$chosen" && sed -i "/ \"$base.html\"/d" ; printf "Draft deleted.\\n" ;;
 	*) printf "Usage:\\n  lb a:\\tnew draft\\n  lb e:\\tedit draft\\n  lb p:\\tpublish/finalize draft\\n  lb r:\\trevise published entry\\n  lb t:\\tdiscard draft\\n  lb d:\\tdelete published entry\\n\\nBe sure to have the following pattern added to your RSS feed, blog file and blog index:\\n\\n<!-- LB -->\\n\\nNew content will be added directly below that sequence. This is required.\\n" ;;
 esac
 fi
