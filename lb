@@ -39,7 +39,7 @@ newpost() { read -erp "Give a title for your post:
 
 	echo "$webdir/$webtarget/posts/$abs_url"
 	echo "lalalalala"
-	( [ -f "$webdir/.drafts/$abs_url/$abs_url.md" ] || [ -f "$webdir/$webtarget/posts/$abs_url" ] ) && echo "There is already an existing draft or post of that same name/URL." && exit
+	( [ -f "$webdir/.drafts/$abs_url/$abs_url.md" ] || [ -d "$webdir/$webtarget/posts/$abs_url" ] ) && echo "There is already an existing draft or post of that same name/URL." && exit
 	mkdir -p "$webdir/.drafts/$abs_url";
 	$EDITOR "$webdir/.drafts/$abs_url/$abs_url.md" ;}
 
