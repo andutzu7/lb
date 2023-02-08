@@ -36,11 +36,10 @@ newpost() { read -erp "Give a title for your post:
 	" title
 	echo "$title" | grep -q "\"" && printf "Double quotation marks (\") are not allowed in entry titles.\\n" && exit
 	abs_url="$(echo "$title" | iconv -cf UTF-8 -t UTF-8 | tr -d '[:punct:]' | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | sed "s/-\+/-/g;s/\(^-\|-\$\)//g")"
-	echo "AddDescription \"$title\" \"$abs_url.md\"" >>  "$archivefile"|| { echo "Error: Is $archivefile writeable?"; exit; }
-	# cautat de folosit URI
-	( [ -f "$webdir/.drafts/$url<F39><F39><F39><F39><F39><F39><F39>/$abs_url.md" ] || [ -f "$webdir/$url/$url.md" ] ) && echo "There is already an existing draft or post of that same name/URL." && exit
-	mkdir -p "$webdir/.drafts/$url";
-	$EDITOR "$webdir/.drafts/$url/$url.md" ;}
+
+	( [ -f "$webdir/.drafts/$abs_url/$abs_url.md" ] || [ -f "$webdir/$url/$url.md" ] ) && echo "There is already an existing draft or post of that same name/URL." && exit
+	mkdir -p "$webdir/.drafts/$abs_url";
+	$EDITOR "$webdir/.drafts/$abs_url/$abs_url.md" ;}
 
 listandReturn() {
 	printf "Listing contents of %s\\n" "$1"
@@ -66,11 +65,10 @@ publish() { \
 	printf "<div class='article'>\\n<h3 class='subtitle' id='%s'>%s</h3>\\n<p>%s... <small><a href='%s'>Read more &#187;</a></small> </p> \\n</div>\\n" "$basefile" "$realname" "$(head -n 2 "$webdir/.drafts/$basefile/$basefile.md" | sed -e 's/#/ /g')" "$website/posts/$basefile/$basefile.html"  > "$tmpdir/html2"
 	printf "<li>%s &ndash; <a href=\"%s\">%s</a></li>\\n" "$(date '+%Y %b %d')" "$website/posts/$basefile/$basefile.html" "$realname" > "$tmpdir/index"
 	cat $tmpdir/html > "$blogfile"
-	cat $tmpdir/html2 > "$webtarget_blog_file"
+	cat $tmpdir/html2 > "$webtarget_archive_file"
 	sed -i "/<!-- LB -->/r $tmpdir/index" "$indexfile"
 	sed -i "/ \"$base.html\"/d" "$archivefile"
-	echo "AddDescription \"$realname\" \"$basefile\" "  r>> "$archivefile"
-	article_path=$webdir/$webtarget_blog_file;
+	article_path=$webdir/$webtarget_archive_file;
 	sed -i "/<div class='articles'>/r $article_path" $webdir/$webtarget/index.html
 	sed -i "/<p>Cele mai recente postari:<\/p>/r $blogfile" $webdir/$domain_name/index.html
 	rm $article_path;
@@ -85,7 +83,6 @@ confirm() { read -erp "Really $1 \"$base\"? (y/N) " choice && echo "$choice" | g
 
 push() { git add . ; git commit -m "new post" ; git push "https://$gittoken/$gitrepo";}
 
-
 impose_changes() { ssh $remotehost -t "cd /var/www/Pseudot;/bin/git pull;/bin/systemctl restart nginx" ;}
 
 delete() { \
@@ -98,7 +95,7 @@ delete() { \
 	push
 	impose_changes
 }
-:
+
 revise() {
 	if [ ! -d "$webdir/.drafts/$chosen" ];then
 	mkdir -p "$webdir/.drafts/${chosen%%.*}/";
@@ -122,13 +119,6 @@ echo "Command syntax: lb [ACTION] [TARGET]"
 echo
 echo "Run the command «lb h» for more information"
 exit
-# de revizuit bucatica asta
-#else
-#website="$protocol://$2.$domain_name";
-
-#webtarget="$2.$domain_name"
-#webtarget_blog_file="$2.$domain_name/$(date +%Y).html"
-#touch $webtarget_blog_file;
 
 fi
 
@@ -137,23 +127,24 @@ if [ -z $2 ]
 then
 # one parameter actions
 case "$1" in
-	p*) listandReturn "$webdir"/.drafts/ publish && publish ;;
 	h*) display_help;;
 	*) printf "Usage:\\n  lb a:\\tnew draft\\n  lb e:\\tedit draft\\n  lb p:\\tpublish/finalize draft\\n  lb r:\\trevise published entry\\n  lb t:\\tdiscard draft\\n  lb d:\\tdelete published entry\\n\\nBe sure to have the following pattern added to your RSS feed, blog file and blog index:\\n\\n<!-- LB -->\\n\\nNew content will be added directly below that sequence. This is required.\\n" ;;
 esac
 else
+website="$protocol://$2.$domain_name";
+
+webtarget="$2.$domain_name"
+webtarget_archive_file="$webdir/$2.$domain_name/$(date +%Y).html"
+echo $webtarget_archive_file
+touch "$webtarget_archive_file";
 # multiple parameter actions
 case "$1" in
 	a*) newpost ;;
+	p*) listandReturn "$webdir"/.drafts/ publish && publish ;;
 	d*) listandReturn "$webdir"/"$webtarget/posts" delete && confirm delete && delete && sed -i "/ \"$base.html\"/d" "$archivefile" ;;
 	r*) listandReturn "$webdir"/"$webtarget/posts" revise && revise ;;
 	e*) listandReturn "$webdir"/.drafts/ edit && "$EDITOR" "$webdir/.drafts/$chosen/$chosen.md" ;;
 	t*) listandReturn "$webdir"/.drafts/ trash && confirm trash && rm -rf "$webdir/.drafts/$chosen" && sed -i "/ \"$base.html\"/d" "$archivefile" ; printf "Draft deleted.\\n" ;;
 	*) printf "Usage:\\n  lb a:\\tnew draft\\n  lb e:\\tedit draft\\n  lb p:\\tpublish/finalize draft\\n  lb r:\\trevise published entry\\n  lb t:\\tdiscard draft\\n  lb d:\\tdelete published entry\\n\\nBe sure to have the following pattern added to your RSS feed, blog file and blog index:\\n\\n<!-- LB -->\\n\\nNew content will be added directly below that sequence. This is required.\\n" ;;
 esac
-
 fi
-# Two parameter actions
-case "$1" in
-
-esac
