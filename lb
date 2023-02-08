@@ -37,8 +37,6 @@ newpost() { read -erp "Give a title for your post:
 	abs_url="$(echo "$title" | iconv -cf UTF-8 -t UTF-8 | tr -d '[:punct:]' | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | sed "s/-\+/-/g;s/\(^-\|-\$\)//g")"
 	echo "AddDescription \"$title\" \"$url.md\"" >>  "$archivefile"|| { echo "Error: Is $archivefile writeable?"; exit; }
 
-	echo "$webdir/$webtarget/posts/$abs_url"
-	echo "lalalalala"
 	( [ -f "$webdir/.drafts/$abs_url/$abs_url.md" ] || [ -d "$webdir/$webtarget/posts/$abs_url" ] ) && echo "There is already an existing draft or post of that same name/URL." && exit
 	mkdir -p "$webdir/.drafts/$abs_url";
 	$EDITOR "$webdir/.drafts/$abs_url/$abs_url.md" ;}
