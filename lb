@@ -56,7 +56,6 @@ listandReturn() {
 publish() { \
 	delete draft
 	htaccessentry=$(grep "$basefile" "$archivefile")
-
 	post_title="$(echo "$htaccessentry" | cut -d'"' -f2)"
 	echo $post_title;
 	echo "##########ASDFASDF"
@@ -68,7 +67,7 @@ publish() { \
 	printf "<div class='article'>\\n<h3 class='subtitle' id='%s'>%s</h3>\\n<p>%s... <small><a href='%s'>Read more &#187;</a></small> </p> \\n</div>\\n" "$basefile" "$post_title" "$(head -n 2 "$webdir/.drafts/$basefile/$basefile.md" | sed -e 's/#/ /g')" "$website/posts/$basefile/$basefile.html"  > "$tmpdir/html2"
 	printf "<li>%s &ndash; <a href=\"%s\">%s</a></li>\\n" "$(date '+%Y %b %d')" "$website/posts/$basefile/$basefile.html" "$post_title" > "$tmpdir/index"
 	cat $tmpdir/html > "$blogfile"
-	cat $tmpdir/html2 >> "$webtarget_archive_file"
+	cat $tmpdir/html2 > "$webtarget_archive_file"
 	sed -i "/<!-- LB -->/r $tmpdir/index" "$indexfile"
 	sed -i "/ \"$base.html\"/d" "$archivefile"
 	article_path=$webdir/$webtarget_archive_file;
