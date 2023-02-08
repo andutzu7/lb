@@ -99,8 +99,9 @@ revise() {
 	if [ ! -d "$webdir/.drafts/$chosen" ];then
 	mkdir -p "$webdir/.drafts/${chosen%%.*}/";
 	fi
-	mv "$webdir/$webtarget/posts/$chosen" "$webdir/.drafts/"
+	mv "$webdir/$webtarget/posts/$chosen" "$webdir/.drafts/${chosen%%.*}/"
 	"$EDITOR" "$webdir/.drafts/${chosen%%.*}/$chosen.html"
+	push
 
 	printf "Revision stored in .drafts. Publish as normal entry when desired.\\n" ;}
 display_help()
