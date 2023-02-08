@@ -99,7 +99,7 @@ revise() {
 	if [ ! -d "$webdir/.drafts/$chosen" ];then
 	mkdir -p "$webdir/.drafts/${chosen%%.*}/";
 	fi
-	awk '/^<small>\[/{flag=1;next}/<footer>/{flag=0}flag' "$webdir/$webtarget/posts/$chosen/$chosen.html" > "$webdir/.drafts/$chosen/$chosen.html"
+	mv "$webdir/$webtarget/posts/$chosen" "$webdir/.drafts/${chosen%%.*}/"
 	"$EDITOR" "$webdir/.drafts/${chosen%%.*}/$chosen.html"
 	push
 
