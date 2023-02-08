@@ -58,6 +58,7 @@ publish() { \
 	htaccessentry=$(grep "$basefile" "$archivefile")
 
 	title="$(echo "$htaccessentry" | cut -d'"' -f2)"
+	echo $title;
 	webdate="$(date '+%a, %d %b %Y %H:%M:%S %z')" # But this visible date you can set to any format.
 	tmpdir=$(mktemp -d)
 	$(cp -r "$webdir/.drafts/$basefile" "$webdir/$webtarget/posts/")
